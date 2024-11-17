@@ -37,7 +37,7 @@ class GridButton:
         print(f"I HAVE BEEN CLICKED AT: {self.coord}")
 
 
-class TwoSquareBoat:
+class Boat:
     def __init__(self, x=500, y=500):
         self.x_pos = x
         self.y_pos = y
@@ -51,7 +51,7 @@ class TwoSquareBoat:
         self.last_y = 500
         self.rotation = 0
         self.blocks = 2
-
+        self.current_squares = []
 
     def calc_grid_squares(self):
         first_square_x = self.rect.x
@@ -60,7 +60,6 @@ class TwoSquareBoat:
         first_square_num = None
         first_square_letter = None
         selected_squares = []
-        # tempX = self.rect.x
         current_square_count = 0
         if self.rotation == 0:
             for key, block in grid.items():
@@ -73,10 +72,17 @@ class TwoSquareBoat:
                     selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
                     first_square_num += 1
                     current_square_count += 1
+                print(selected_squares)
                 if len(selected_squares) == self.blocks and first_square_num <= 11:
-                    print("GOOD")
+                    for square in selected_squares:
+                        if square in coords_used:
+                            return False
+                    for square in selected_squares:
+                        self.current_squares.append(square)
+                        coords_used.append(square)
+                    return True
                 else:
-                    print("BAD")
+                    return False
         if self.rotation == -90:
             for key, block in grid.items():
                 if block.rect.x == first_square_x and block.rect.y == first_square_y:
@@ -88,15 +94,51 @@ class TwoSquareBoat:
                     selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
                     first_square_letter += 1
                     current_square_count += 1
+                print(selected_squares)
                 if len(selected_squares) == self.blocks and first_square_letter <= 75:
-                    print("GOOD-2")
+                    for square in selected_squares:
+                        if square in coords_used:
+                            return False
+                    for square in selected_squares:
+                        self.current_squares.append(square)
+                        coords_used.append(square)
+                    return True
                 else:
-                    print("BAD-2")
+                    return False
+
+
+    def update_coords(self):
+        if self.current_squares:
+            for square in self.current_squares:
+                if square in coords_used:
+                    coords_used.remove(square)
+            self.current_squares = []
 
 
 
-class FiveSquareBoat:
+class TwoSquareBoat(Boat):
+    def __init__(self, x=500, y=500):
+        super().__init__(x, y)
+        self.x_pos = x
+        self.y_pos = y
+        self.img = pygame.image.load("./img/2SquareBoat.png").convert_alpha()
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.default_x = 500
+        self.default_y = 500
+        self.last_x = 500
+        self.last_y = 500
+        self.blocks = 2
+
+
+
+
+
+
+class FiveSquareBoat(Boat):
     def __init__(self, x=250, y=500):
+        super().__init__(x, y)
         self.x_pos = x
         self.y_pos = y
         self.img = pygame.image.load("./img/5SquareBoat.png").convert_alpha()
@@ -107,49 +149,7 @@ class FiveSquareBoat:
         self.default_y = 500
         self.last_x = 250
         self.last_y = 500
-        self.rotation = 0
         self.blocks = 5
-
-
-    def calc_grid_squares(self):
-        first_square_x = self.rect.x
-        first_square_y = self.rect.y
-        first_square = None
-        first_square_num = None
-        first_square_letter = None
-        selected_squares = []
-        # tempX = self.rect.x
-        current_square_count = 0
-        if self.rotation == 0:
-            for key, block in grid.items():
-                if block.rect.x == first_square_x and block.rect.y == first_square_y:
-                    first_square = key
-                    first_square_num = block.num
-                    first_square_letter = block.letter
-            if first_square:
-                while current_square_count != self.blocks:
-                    selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
-                    first_square_num += 1
-                    current_square_count += 1
-                if len(selected_squares) == self.blocks and first_square_num <= 11:
-                    print("GOOD")
-                else:
-                    print("BAD")
-        if self.rotation == -90:
-            for key, block in grid.items():
-                if block.rect.x == first_square_x and block.rect.y == first_square_y:
-                    first_square = key
-                    first_square_num = block.num
-                    first_square_letter = block.letter
-            if first_square:
-                while current_square_count != self.blocks:
-                    selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
-                    first_square_letter += 1
-                    current_square_count += 1
-                if len(selected_squares) == self.blocks and first_square_letter <= 75:
-                    print("GOOD-2")
-                else:
-                    print("BAD-2")
 
 
 
@@ -166,6 +166,8 @@ ships.append(FiveSquareBoat())
 
 currently_selected = None
 canceled_action = False
+
+hovering_grid = False
 
 game = True
 while game:
@@ -211,15 +213,23 @@ while game:
             game = False
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if currently_selected:
-                currently_selected = None
-                canceled_action = True
+                if currently_selected.calc_grid_squares(): # only places down the ship on grid if in proper spot
+                    currently_selected = None
+                    canceled_action = True
+                    print(coords_used)
+                elif not hovering_grid: # returns ship to default location if placed not on grid square
+                    currently_selected.rect.x = currently_selected.default_x
+                    currently_selected.rect.y = currently_selected.default_y
+                    currently_selected = None
+                    canceled_action = True
             for button in grid.values():
                 if button.rect.collidepoint(event.pos):
                     button.clicked()
-            if not canceled_action:
+            if not canceled_action and not currently_selected:
                 for ship in ships:
                     if ship.rect.collidepoint(event.pos):
                         currently_selected = ship
+                        currently_selected.update_coords()
                         print("YEPP")
             canceled_action = False
         if currently_selected and event.type == pygame.KEYDOWN:
@@ -235,8 +245,10 @@ while game:
         for ship in ships:
             ship_rotation = pygame.transform.rotate(ship.img,ship.rotation)
             screen.blit(ship_rotation, (ship.rect.x,ship.rect.y))
-            # print(ship.rotation)
 
+            rotation_rect = ship_rotation.get_rect(center=ship.rect.center)
+            ship.rect = rotation_rect
+            #pygame.draw.rect(screen, (255,0,0), ship.rect)
 
 
 
@@ -249,7 +261,7 @@ while game:
                 # print("GRID")
                 currently_selected.rect.x = square.rect.x
                 currently_selected.rect.y = square.rect.y
-                currently_selected.calc_grid_squares()
+                #currently_selected.calc_grid_squares()
                 break
         if not hovering_grid:
             currently_selected.rect.x = mouse_pos[0]
@@ -258,6 +270,8 @@ while game:
 
 
     # print(grid.keys())
+
+    print(coords_used)
 
     pygame.display.flip()
     pygame.display.update()
