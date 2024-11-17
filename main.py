@@ -10,10 +10,6 @@ pygame.display.set_caption("Battleship")
 
 
 outerBackground = pygame.image.load("./img/outerBackground.png").convert_alpha()
-outerBackgroundGrey = pygame.image.load("./img/outerBackgroundGrey.png").convert_alpha()
-outerBackgroundCharcoal = pygame.image.load("./img/outerBackgroundCharcoal.png").convert_alpha()
-outerBackgroundLightYellow = pygame.image.load("./img/outerBackgroundLightYellow.png").convert_alpha()
-outerBackgroundMustard = pygame.image.load("./img/outerBackgroundMustard.png").convert_alpha()
 
 borderBarHorizontal = pygame.image.load("./img/borderBarTop.png").convert_alpha()
 borderBarVertical = pygame.image.load("./img/borderBarSide.png").convert_alpha()
@@ -22,7 +18,7 @@ borderBarVertical = pygame.image.load("./img/borderBarSide.png").convert_alpha()
 coords_used = []
 
 
-class GridButton:
+class GridButton: # individual grid squares
     def __init__(self,x=100,y=100, letter=65, num=1):
         self.x_pos = x
         self.y_pos = y
@@ -116,7 +112,7 @@ class Boat:
 
 
 
-class TwoSquareBoat(Boat):
+class TwoSquareBoat(Boat): # class for two square-long boat
     def __init__(self, x=500, y=500):
         super().__init__(x, y)
         self.x_pos = x
@@ -136,7 +132,7 @@ class TwoSquareBoat(Boat):
 
 
 
-class FiveSquareBoat(Boat):
+class FiveSquareBoat(Boat): # class for five square-long boat
     def __init__(self, x=250, y=500):
         super().__init__(x, y)
         self.x_pos = x
@@ -181,7 +177,7 @@ while game:
 
 
 
-    if create_game:
+    if create_game: # creates the game board
         x_pos = 100-36
         y_pos = 100
         letter = 65
@@ -201,15 +197,14 @@ while game:
 
         create_game = False
 
-    for button in grid.values():
+    for button in grid.values(): # draws each individual square in the grid
         # screen.blit(button, (button.x_pos, button.y_pos))
         pygame.draw.rect(screen, (0, 157, 196), button.rect)
     #(211, 211, 211)
     #(64, 64, 64)
     ship_dragged = False
-    for event in pygame.event.get():
+    for event in pygame.event.get(): # handles most user input events
         if event.type == pygame.QUIT:
-            # if the x in the top right corner of game is clicked, the program will close.
             game = False
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if currently_selected:
@@ -222,17 +217,17 @@ while game:
                     currently_selected.rect.y = currently_selected.default_y
                     currently_selected = None
                     canceled_action = True
-            for button in grid.values():
+            for button in grid.values(): # prints out the square that was clicked
                 if button.rect.collidepoint(event.pos):
                     button.clicked()
-            if not canceled_action and not currently_selected:
+            if not canceled_action and not currently_selected: # handles selecting a ship to move/place
                 for ship in ships:
                     if ship.rect.collidepoint(event.pos):
                         currently_selected = ship
                         currently_selected.update_coords()
                         print("YEPP")
             canceled_action = False
-        if currently_selected and event.type == pygame.KEYDOWN:
+        if currently_selected and event.type == pygame.KEYDOWN: # changes rotation angle if 'r' key is pressed when holding ship.
             if event.key == pygame.K_r:
                 if currently_selected.rotation:
                     currently_selected.rotation += 90
@@ -241,29 +236,29 @@ while game:
                 canceled_action = True
 
 
-    if select_ship_positions:
-        for ship in ships:
-            ship_rotation = pygame.transform.rotate(ship.img,ship.rotation)
-            screen.blit(ship_rotation, (ship.rect.x,ship.rect.y))
 
-            rotation_rect = ship_rotation.get_rect(center=ship.rect.center)
-            ship.rect = rotation_rect
-            #pygame.draw.rect(screen, (255,0,0), ship.rect)
+    for ship in ships: # displays the ships to the screen and handles the rotation of the rects
+        ship_rotation = pygame.transform.rotate(ship.img,ship.rotation)
+        screen.blit(ship_rotation, (ship.rect.x,ship.rect.y))
+
+        rotation_rect = ship_rotation.get_rect(center=ship.rect.center)
+        ship.rect = rotation_rect
+        #pygame.draw.rect(screen, (255,0,0), ship.rect)
 
 
 
-    if currently_selected:
+    if currently_selected: # if a ship is selected, handle how it moves
         mouse_pos = pygame.mouse.get_pos()
         hovering_grid = False
         for square in grid.values():
-            if square.rect.collidepoint(mouse_pos):
+            if square.rect.collidepoint(mouse_pos): # ship snaps to hovered over square
                 hovering_grid = True
                 # print("GRID")
                 currently_selected.rect.x = square.rect.x
                 currently_selected.rect.y = square.rect.y
                 #currently_selected.calc_grid_squares()
                 break
-        if not hovering_grid:
+        if not hovering_grid: # if ship is not over a grid square, follow the mouse
             currently_selected.rect.x = mouse_pos[0]
             currently_selected.rect.y = mouse_pos[1]
             # print("NO GRID")
