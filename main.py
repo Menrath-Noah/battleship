@@ -1,0 +1,266 @@
+import pygame, sys
+
+pygame.init()
+
+
+screen = pygame.display.set_mode((600, 600))
+
+
+pygame.display.set_caption("Battleship")
+
+
+outerBackground = pygame.image.load("./img/outerBackground.png").convert_alpha()
+outerBackgroundGrey = pygame.image.load("./img/outerBackgroundGrey.png").convert_alpha()
+outerBackgroundCharcoal = pygame.image.load("./img/outerBackgroundCharcoal.png").convert_alpha()
+outerBackgroundLightYellow = pygame.image.load("./img/outerBackgroundLightYellow.png").convert_alpha()
+outerBackgroundMustard = pygame.image.load("./img/outerBackgroundMustard.png").convert_alpha()
+
+borderBarHorizontal = pygame.image.load("./img/borderBarTop.png").convert_alpha()
+borderBarVertical = pygame.image.load("./img/borderBarSide.png").convert_alpha()
+
+
+coords_used = []
+
+
+class GridButton:
+    def __init__(self,x=100,y=100, letter=65, num=1):
+        self.x_pos = x
+        self.y_pos = y
+        self.width = 35
+        self.height = 35
+        self.rect = pygame.Rect(self.x_pos, self.y_pos, self.width, self.height)
+        self.letter = letter
+        self.num = num
+        self.coord = f"{chr(self.letter)}{self.num}"
+
+    def clicked(self):
+        print(f"I HAVE BEEN CLICKED AT: {self.coord}")
+
+
+class TwoSquareBoat:
+    def __init__(self, x=500, y=500):
+        self.x_pos = x
+        self.y_pos = y
+        self.img = pygame.image.load("./img/2SquareBoat.png").convert_alpha()
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.default_x = 500
+        self.default_y = 500
+        self.last_x = 500
+        self.last_y = 500
+        self.rotation = 0
+        self.blocks = 2
+
+
+    def calc_grid_squares(self):
+        first_square_x = self.rect.x
+        first_square_y = self.rect.y
+        first_square = None
+        first_square_num = None
+        first_square_letter = None
+        selected_squares = []
+        # tempX = self.rect.x
+        current_square_count = 0
+        if self.rotation == 0:
+            for key, block in grid.items():
+                if block.rect.x == first_square_x and block.rect.y == first_square_y:
+                    first_square = key
+                    first_square_num = block.num
+                    first_square_letter = block.letter
+            if first_square:
+                while current_square_count != self.blocks:
+                    selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
+                    first_square_num += 1
+                    current_square_count += 1
+                if len(selected_squares) == self.blocks and first_square_num <= 11:
+                    print("GOOD")
+                else:
+                    print("BAD")
+        if self.rotation == -90:
+            for key, block in grid.items():
+                if block.rect.x == first_square_x and block.rect.y == first_square_y:
+                    first_square = key
+                    first_square_num = block.num
+                    first_square_letter = block.letter
+            if first_square:
+                while current_square_count != self.blocks:
+                    selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
+                    first_square_letter += 1
+                    current_square_count += 1
+                if len(selected_squares) == self.blocks and first_square_letter <= 75:
+                    print("GOOD-2")
+                else:
+                    print("BAD-2")
+
+
+
+class FiveSquareBoat:
+    def __init__(self, x=250, y=500):
+        self.x_pos = x
+        self.y_pos = y
+        self.img = pygame.image.load("./img/5SquareBoat.png").convert_alpha()
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.default_x = 250
+        self.default_y = 500
+        self.last_x = 250
+        self.last_y = 500
+        self.rotation = 0
+        self.blocks = 5
+
+
+    def calc_grid_squares(self):
+        first_square_x = self.rect.x
+        first_square_y = self.rect.y
+        first_square = None
+        first_square_num = None
+        first_square_letter = None
+        selected_squares = []
+        # tempX = self.rect.x
+        current_square_count = 0
+        if self.rotation == 0:
+            for key, block in grid.items():
+                if block.rect.x == first_square_x and block.rect.y == first_square_y:
+                    first_square = key
+                    first_square_num = block.num
+                    first_square_letter = block.letter
+            if first_square:
+                while current_square_count != self.blocks:
+                    selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
+                    first_square_num += 1
+                    current_square_count += 1
+                if len(selected_squares) == self.blocks and first_square_num <= 11:
+                    print("GOOD")
+                else:
+                    print("BAD")
+        if self.rotation == -90:
+            for key, block in grid.items():
+                if block.rect.x == first_square_x and block.rect.y == first_square_y:
+                    first_square = key
+                    first_square_num = block.num
+                    first_square_letter = block.letter
+            if first_square:
+                while current_square_count != self.blocks:
+                    selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
+                    first_square_letter += 1
+                    current_square_count += 1
+                if len(selected_squares) == self.blocks and first_square_letter <= 75:
+                    print("GOOD-2")
+                else:
+                    print("BAD-2")
+
+
+
+
+#grid = []
+grid = {}
+
+create_game = True
+select_ship_positions = True
+
+ships = []
+ships.append(TwoSquareBoat())
+ships.append(FiveSquareBoat())
+
+currently_selected = None
+canceled_action = False
+
+game = True
+while game:
+    clock = 60
+
+    screen.blit(outerBackground, (0, 0))
+    screen.blit(borderBarHorizontal, (92, 92))
+    screen.blit(borderBarHorizontal, (92, 459))
+    screen.blit(borderBarVertical, (92, 92))
+    screen.blit(borderBarVertical, (459, 92))
+
+
+
+    if create_game:
+        x_pos = 100-36
+        y_pos = 100
+        letter = 65
+        num = 0
+        for i in range(100):
+
+            if i % 10 == 0 and i != 0:
+                x_pos = 100
+                y_pos += 36
+                num = 1
+                letter += 1
+            else:
+                x_pos += 36
+                num += 1
+            #grid.append(GridButton(x_pos, y_pos, letter, num))
+            grid[f"{chr(letter)}{num}"] = GridButton(x_pos, y_pos, letter, num)
+
+        create_game = False
+
+    for button in grid.values():
+        # screen.blit(button, (button.x_pos, button.y_pos))
+        pygame.draw.rect(screen, (0, 157, 196), button.rect)
+    #(211, 211, 211)
+    #(64, 64, 64)
+    ship_dragged = False
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            # if the x in the top right corner of game is clicked, the program will close.
+            game = False
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if currently_selected:
+                currently_selected = None
+                canceled_action = True
+            for button in grid.values():
+                if button.rect.collidepoint(event.pos):
+                    button.clicked()
+            if not canceled_action:
+                for ship in ships:
+                    if ship.rect.collidepoint(event.pos):
+                        currently_selected = ship
+                        print("YEPP")
+            canceled_action = False
+        if currently_selected and event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                if currently_selected.rotation:
+                    currently_selected.rotation += 90
+                else:
+                    currently_selected.rotation -= 90
+                canceled_action = True
+
+
+    if select_ship_positions:
+        for ship in ships:
+            ship_rotation = pygame.transform.rotate(ship.img,ship.rotation)
+            screen.blit(ship_rotation, (ship.rect.x,ship.rect.y))
+            # print(ship.rotation)
+
+
+
+
+    if currently_selected:
+        mouse_pos = pygame.mouse.get_pos()
+        hovering_grid = False
+        for square in grid.values():
+            if square.rect.collidepoint(mouse_pos):
+                hovering_grid = True
+                # print("GRID")
+                currently_selected.rect.x = square.rect.x
+                currently_selected.rect.y = square.rect.y
+                currently_selected.calc_grid_squares()
+                break
+        if not hovering_grid:
+            currently_selected.rect.x = mouse_pos[0]
+            currently_selected.rect.y = mouse_pos[1]
+            # print("NO GRID")
+
+
+    # print(grid.keys())
+
+    pygame.display.flip()
+    pygame.display.update()
+
+pygame.quit()
+sys.exit()
