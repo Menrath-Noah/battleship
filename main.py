@@ -22,7 +22,7 @@ SERVER_IP = '192.168.1.111'
 PORT = 5159
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-my_turn = False
+
 
 try:
     client.connect((SERVER_IP, PORT))
@@ -59,9 +59,12 @@ class GridButtonAway: # individual grid squares for Attacking
         self.coord = f"{chr(self.letter)}{self.num}"
 
     def clicked(self):
+        global selected_target
         print(f"I HAVE BEEN CLICKED AT: {self.coord}")
         if my_turn:
-            client.sendall(f"{self.coord}".encode("utf-8"))
+            selected_target = self.coord
+            print(selected_target)
+
 
 
 
@@ -192,10 +195,17 @@ textBoardAway = {}
 gridHome = {}
 gridAway = {}
 
+my_attacks = []
+my_missed_attacks = []
+my_hit_attacks = []
 
-selected_attacked = []
-missed_attacks = []
-hit_attacks = []
+opponent_attacks = []
+opponent_missed_attacks = []
+opponent_hit_attacks = []
+
+
+my_turn = False
+selected_target = ""
 
 create_game = True
 select_ship_positions = True
@@ -207,6 +217,7 @@ ships.append(FiveSquareBoat())
 
 currently_selected = None
 canceled_action = False
+attack_button = None
 
 hovering_grid = False
 
@@ -311,6 +322,12 @@ while game:
     if select_ship_positions:
         confirm_button = pygame.Rect(225, 600, 100, 35)
         pygame.draw.rect(screen, (45, 25, 92), confirm_button)
+    if play_game:
+        attack_button = pygame.Rect(800, 600, 100, 35)
+        if my_turn:
+            pygame.draw.rect(screen, (255,0,0), attack_button)
+        else:
+            pygame.draw.rect(screen, (128,128,128), attack_button)
 
     ship_dragged = False
     for event in pygame.event.get(): # handles most user input events
@@ -333,24 +350,38 @@ while game:
             for key, button in gridAway.items(): # handles attacking a point
                 if button.rect.collidepoint(event.pos):
                     button.clicked()
-                    if key in coords_used:
-                        hit_attacks.append(key)
-                    else:
-                        missed_attacks.append(key)
+                    print(attack_button)
+                    print(my_turn)
+                    if attack_button:
+                        print(event.pos)
+                        if attack_button.collidepoint(event.pos) and my_turn:
+                            print(selected_target)
+                            print("INNNN")
+                            client.send(f"POSITION:{selected_target}".encode("utf-8"))
+                            selected_target = ""
+                    # if key in coords_used:
+                    #     my_hit_attacks.append(key)
+                    # else:
+                    #     my_missed_attacks.append(key)
             if not canceled_action and not currently_selected: # handles selecting a ship to move/place
                 for ship in ships:
                     if ship.rect.collidepoint(event.pos) and select_ship_positions:
                         currently_selected = ship
                         currently_selected.update_coords()
-                        print("YEPP")
             canceled_action = False
             if confirm_button:
                 if confirm_button.collidepoint(event.pos):
-                    client.sendall(f"SHIP-COORDS:{coords_used}".encode("utf-8"))
+                    client.send(f"SHIP-COORDS:{coords_used}".encode("utf-8"))
                     print("Ship Coords Locked-In!")
                     currently_selected = None
                     confirm_button = None
                     select_ship_positions = False
+            if attack_button:
+                if attack_button.collidepoint(event.pos) and my_turn:
+                    print("LEELELELELE")
+                    client.send(f"POSITION:{selected_target}".encode("utf-8"))
+                    selected_target = ""
+
         if currently_selected and event.type == pygame.KEYDOWN: # changes rotation angle if 'r' key is pressed when holding ship.
             if event.key == pygame.K_r:
                 if currently_selected.rotation:
@@ -388,12 +419,19 @@ while game:
             # print("NO GRID")
 
 
-    for button in missed_attacks:
+    for button in my_missed_attacks:
         pygame.draw.circle(screen, (0,0,0), gridAway[button].rect.center, 10)
         # gridButtonAway[area]
-    for button in hit_attacks:
+    for button in my_hit_attacks:
         pygame.draw.line(screen, (255,0,0), (gridAway[button].rect.x + 5, gridAway[button].rect.y + 5), (gridAway[button].rect.x+30, gridAway[button].rect.y+30), 4)
         pygame.draw.line(screen, (255,0,0), (gridAway[button].rect.x + 5, gridAway[button].rect.y + 30), (gridAway[button].rect.x+30, gridAway[button].rect.y+5), 4)
+
+    for button in opponent_missed_attacks:
+        pygame.draw.circle(screen, (0,0,0), gridHome[button].rect.center, 10)
+        # gridButtonAway[area]
+    for button in opponent_hit_attacks:
+        pygame.draw.line(screen, (255,0,0), (gridHome[button].rect.x + 5, gridAway[button].rect.y + 5), (gridHome[button].rect.x+30, gridAway[button].rect.y+30), 4)
+        pygame.draw.line(screen, (255,0,0), (gridHome[button].rect.x + 5, gridAway[button].rect.y + 30), (gridHome[button].rect.x+30, gridAway[button].rect.y+5), 4)
 
 
     def drawBoardText(key, text): # displays board coordinates
@@ -449,13 +487,150 @@ while game:
     try:
         new_data = client.recv(2048)
         new_data = new_data.decode()
-        new_data = new_data.split("\n")
-        # if new_data.startswith("SERVER:"):
-        for data in new_data:
-            print(data)
+        new_data = new_data.strip()
+        print("----")
+        print(new_data)
+        print("----")
+        if new_data.count("+") > 1:
+            new_data = new_data.split("+")
+            for data in new_data:
+                if data.startswith("VAR:"):
+                    print("A")
+                    updated_data = data[4:]
+                    var_change = updated_data.split(":")
+                    var = var_change[0]
+                    var_value = var_change[1]
+                    var_value = var_value.replace("+", "")
+                    var_value.strip()
+                    if var == "play_game":
+                        print("B")
+                        if var_value == "True":
+                            play_game = True
+                            print("C")
+                        elif var_value == "False":
+                            play_game = False
+                    if var == "my_turn":
+                        print("D")
+                        if var_value == "True":
+                            print("E")
+                            my_turn = True
+                        elif var_value == "False":
+                            my_turn = False
+                            print("F")
+                if data.startswith("ATTACK:"):
+                    print("EINS")
+                    updated_data = data[7:]
+                    var_change = updated_data.split(":")
+                    var = var_change[0]
+                    var_value = var_change[1]
+                    if var == "RECEIVED":
+                        print("ZWEI")
+                        updated_data = updated_data[9:]
+                        var_change = updated_data.split(":")
+                        var = var_change[0]
+                        var_value = var_change[1]
+                        my_attacks.append(var_value)
+                        var_value = var_value.replace("+", "")
+                        var_value.strip()
+                        if var == "HIT":
+                            print("DREI")
+                            my_hit_attacks.append(var_value)
+                        elif var == "MISS":
+                            print("VIER")
+                            my_missed_attacks.append(var_value)
+                    elif var == "OPPONENT":
+                        print("FUNF")
+                        updated_data = updated_data[9:]
+                        var_change = updated_data.split(":")
+                        var = var_change[0]
+                        var_value = var_change[1]
+                        var_value = var_value.replace("+", "")
+                        var_value.strip()
+                        opponent_attacks.append(var_value)
+                        if var == "HIT":
+                            print("SECHS")
+                            opponent_hit_attacks.append(var_value)
+                        elif var == "MISS":
+                            print("SIEBEN")
+                            opponent_missed_attacks.append(var_value)
+                else:
+                    print(data)
+        else:
+            if new_data.startswith("VAR:"):
+                print("0")
+                new_data = new_data[4:]
+                var_change = new_data.split(":")
+                var = var_change[0]
+                var_value = var_change[1]
+                var_value = var_value.replace("+", "")
+                var_value.strip()
+                if var == "play_game":
+                    print("1")
+                    if var_value == "True":
+                        play_game = True
+                        print("2")
+                    elif var_value == "False":
+                        play_game = False
+                if var == "my_turn":
+                    print("3")
+                    print(var)
+                    print(var_value)
+                    if var_value == "True":
+                        print("4")
+                        my_turn = True
+                    elif var_value == "False":
+                        my_turn = False
+                        print("5")
+            if new_data.startswith("ATTACK:"):
+                print("EINS-2")
+                new_data = new_data[7:]
+                var_change = new_data.split(":")
+                var = var_change[0]
+                var_value = var_change[1]
+                print(var)
+                print(var_value)
+                if var == "RECEIVED":
+                    print("ZWEI-2")
+                    new_data = new_data[9:]
+                    var_change = new_data.split(":")
+                    var = var_change[0]
+                    var_value = var_change[1]
+                    var_value = var_value.replace("+", "")
+                    var_value.strip()
+                    my_attacks.append(var_value)
+                    print(var)
+                    print(var_value)
+                    if var == "HIT":
+                        print("DREI-2")
+                        my_hit_attacks.append(var_value)
+                    elif var == "MISS":
+                        print("VIER-2")
+                        my_missed_attacks.append(var_value)
+                elif var == "OPPONENT":
+                    print("FUNF-2")
+                    new_data = new_data[9:]
+                    var_change = new_data.split(":")
+                    var = var_change[0]
+                    var_value = var_change[1]
+                    var_value = var_value.replace("+", "")
+                    var_value.strip()
+                    opponent_attacks.append(var_value)
+                    if var == "HIT":
+                        print("SECHS-2")
+                        opponent_hit_attacks.append(var_value)
+                    elif var == "MISS":
+                        print("SIEBEN-2")
+                        opponent_missed_attacks.append(var_value)
+            else:
+                new_data = new_data.replace("+", "")
+                new_data.strip()
+                print(new_data)
     except:
         pass
 
+    if my_turn:
+        text_rendererTurn = text_font.render("MY TURN", False, (0,0,0))
+        screen.blit(text_rendererTurn, (480, 25))
 
 
     pygame.display.flip()
