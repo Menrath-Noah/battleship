@@ -1,3 +1,5 @@
+import threading
+
 import pygame, sys, socket
 
 pygame.init()
@@ -14,16 +16,17 @@ outerBackground = pygame.image.load("./img/outerBackgroundResized.png").convert_
 borderBarHorizontal = pygame.image.load("./img/borderBarTop.png").convert_alpha()
 borderBarVertical = pygame.image.load("./img/borderBarSide.png").convert_alpha()
 
-
 coords_used = []
 
-SERVER_IP = '192.168.1.111'  # Change this to your server's IP address if needed
-PORT = 5159  # Make sure this matches the server's port
+SERVER_IP = '192.168.1.111'
+PORT = 5159
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+my_turn = False
 
 try:
     client.connect((SERVER_IP, PORT))
+    client.setblocking(False)
     print("***WELCOME TO THE SERVER!!!***")
 except Exception as e:
     print("***CANNOT CONNECT***", e)
@@ -43,7 +46,6 @@ class GridButtonHome: # individual grid squares for Placing Boats
 
     def clicked(self):
         print(f"I HAVE BEEN CLICKED AT: {self.coord}")
-        client.sendall(f"{self.coord}".encode("utf-8"))
 
 class GridButtonAway: # individual grid squares for Attacking
     def __init__(self,x=100,y=100, letter=65, num=1):
@@ -58,6 +60,8 @@ class GridButtonAway: # individual grid squares for Attacking
 
     def clicked(self):
         print(f"I HAVE BEEN CLICKED AT: {self.coord}")
+        if my_turn:
+            client.sendall(f"{self.coord}".encode("utf-8"))
 
 
 
@@ -174,6 +178,7 @@ class FiveSquareBoat(Boat): # class for five square-long boat
         self.last_x = 100
         self.last_y = 500
         self.blocks = 5
+
 
 
 
@@ -441,9 +446,15 @@ while game:
         drawBoardText(key, text)
 
 
-
-
-
+    try:
+        new_data = client.recv(2048)
+        new_data = new_data.decode()
+        new_data = new_data.split("\n")
+        # if new_data.startswith("SERVER:"):
+        for data in new_data:
+            print(data)
+    except:
+        pass
 
 
 
