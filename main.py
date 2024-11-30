@@ -1,4 +1,4 @@
-import pygame, sys
+import pygame, sys, socket
 
 pygame.init()
 
@@ -17,6 +17,18 @@ borderBarVertical = pygame.image.load("./img/borderBarSide.png").convert_alpha()
 
 coords_used = []
 
+SERVER_IP = '192.168.1.111'  # Change this to your server's IP address if needed
+PORT = 5159  # Make sure this matches the server's port
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
+try:
+    client.connect((SERVER_IP, PORT))
+    print("***WELCOME TO THE SERVER!!!***")
+except Exception as e:
+    print("***CANNOT CONNECT***", e)
+    sys.exit()
+
 
 class GridButtonHome: # individual grid squares for Placing Boats
     def __init__(self,x=100,y=100, letter=65, num=1):
@@ -31,6 +43,7 @@ class GridButtonHome: # individual grid squares for Placing Boats
 
     def clicked(self):
         print(f"I HAVE BEEN CLICKED AT: {self.coord}")
+        client.sendall(f"{self.coord}".encode("utf-8"))
 
 class GridButtonAway: # individual grid squares for Attacking
     def __init__(self,x=100,y=100, letter=65, num=1):
@@ -45,6 +58,7 @@ class GridButtonAway: # individual grid squares for Attacking
 
     def clicked(self):
         print(f"I HAVE BEEN CLICKED AT: {self.coord}")
+
 
 
 class Boat:
@@ -180,6 +194,7 @@ hit_attacks = []
 
 create_game = True
 select_ship_positions = True
+play_game = False
 
 ships = []
 ships.append(TwoSquareBoat())
@@ -286,6 +301,12 @@ while game:
     for button in gridAway.values(): # draws each individual square in the grid
         pygame.draw.rect(screen, (0, 157, 196), button.rect)
 
+
+
+    if select_ship_positions:
+        confirm_button = pygame.Rect(225, 600, 100, 35)
+        pygame.draw.rect(screen, (45, 25, 92), confirm_button)
+
     ship_dragged = False
     for event in pygame.event.get(): # handles most user input events
         if event.type == pygame.QUIT:
@@ -313,11 +334,18 @@ while game:
                         missed_attacks.append(key)
             if not canceled_action and not currently_selected: # handles selecting a ship to move/place
                 for ship in ships:
-                    if ship.rect.collidepoint(event.pos):
+                    if ship.rect.collidepoint(event.pos) and select_ship_positions:
                         currently_selected = ship
                         currently_selected.update_coords()
                         print("YEPP")
             canceled_action = False
+            if confirm_button:
+                if confirm_button.collidepoint(event.pos):
+                    client.sendall(f"SHIP-COORDS:{coords_used}".encode("utf-8"))
+                    print("Ship Coords Locked-In!")
+                    currently_selected = None
+                    confirm_button = None
+                    select_ship_positions = False
         if currently_selected and event.type == pygame.KEYDOWN: # changes rotation angle if 'r' key is pressed when holding ship.
             if event.key == pygame.K_r:
                 if currently_selected.rotation:
@@ -411,6 +439,9 @@ while game:
 
     for key,text in textBoardAway.items():
         drawBoardText(key, text)
+
+
+
 
 
 
