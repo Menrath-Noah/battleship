@@ -1,12 +1,11 @@
-import random
 import socket
 import threading
-import time
 
-HOST_IP = '192.168.1.111'
-PORT = 5159
+# HOST_IP = '192.168.1.111'
+HOST_IP = None
+PORT = 5155
 
-VISITOR_IP = ''
+VISITOR_IP = None
 
 devices = []
 device_objects = {}
@@ -22,14 +21,12 @@ visitor_attacks = []
 current_turn = ""
 
 select_ship_positions = True
-play_game = True
+play_game = False
 
 
 # Create and bind the server socket
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST_IP, PORT))
-server.listen(2)
-print(f"***SERVER LAUNCHED***")
+
 
 
 
@@ -37,6 +34,8 @@ print(f"***SERVER LAUNCHED***")
 def loop_game():
     global select_ship_positions
     global current_turn
+    global play_game
+    global device_objects
     while True:
         if len(coords_received) == 2 and select_ship_positions:
             select_ship_positions = False
@@ -53,7 +52,12 @@ def loop_game():
                 device.send(f"SERVER: The {current_turn} has the first move!+".encode("utf-8"))
                 
                 device.send(f"VAR:play_game:True+".encode("utf-8"))
-            device_objects[current_turn].send(f"VAR:my_turn:True".encode("utf-8"))
+            device_objects[current_turn].send(f"VAR:my_turn:True+".encode("utf-8"))
+        if "VISITOR" in device_objects and "HOST" in device_objects and not play_game:
+            print("BOTH CONNECTED!")
+            device_objects["HOST"].send("FUNC:begin_game+".encode("utf-8"))
+            device_objects["VISITOR"].send(f"FUNC:begin_game+".encode("utf-8"))
+            play_game = True
 
 
 
@@ -125,22 +129,28 @@ def loop_client(device, address):
                     device_objects[other_player].send(f"VAR:my_turn:True+".encode("utf-8"))
 
 
-control_game = threading.Thread(target=loop_game)
-control_game.start()
 
-while True:
-    connection_obj, address = server.accept()
 
-    if address[0] not in devices:
-        devices.append(address[0])
-        if address[0] == HOST_IP:
-            device_objects["HOST"] = connection_obj
-        else:
-            device_objects["VISITOR"] = connection_obj
-        # device_objects.append(connection_obj)
-        if address[0] != HOST_IP:
-            VISITOR_IP = address[0]
-    print(devices)
-    new_device = threading.Thread(target=loop_client, args=(connection_obj, address))
-    new_device.start()
+if __name__ == "__main__":
+    HOST_IP = "192.168.1.111"
+    server.bind((HOST_IP, PORT))
+    server.listen(2)
+    print(f"***SERVER LAUNCHED***")
+    control_game = threading.Thread(target=loop_game)
+    control_game.start()
+    while True:
+        connection_obj, address = server.accept()
+
+        if address[0] not in devices:
+            devices.append(address[0])
+            if address[0] == HOST_IP:
+                device_objects["HOST"] = connection_obj
+            else:
+                device_objects["VISITOR"] = connection_obj
+            # device_objects.append(connection_obj)
+            if address[0] != HOST_IP:
+                VISITOR_IP = address[0]
+        print(devices)
+        new_device = threading.Thread(target=loop_client, args=(connection_obj, address))
+        new_device.start()
 
