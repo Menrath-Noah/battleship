@@ -300,6 +300,7 @@ server_result_message = ""
 ip_input = pg_input.TextInputVisualizer()
 port_input = pg_input.TextInputVisualizer()
 joining = False
+hosting = False
 input_border = None
 port_input_border = None
 ip_input_typing = False
@@ -418,6 +419,38 @@ while game:
             pygame.draw.rect(screen, (0,0,0), confirm_connection_button)
             pygame.draw.rect(screen, (255,255,255), confirm_connection_button_inner)
             screen.blit(text_renderer_connect, (confirm_connection_button_inner.x+9, confirm_connection_button_inner.y+13))
+        if hosting:
+            input_border = pygame.Rect(join_button_inner.x+237, 390, 386, 70)
+            input_inner = pygame.Rect(join_button_inner.x+245, 400, 370, 50)
+
+
+            pygame.draw.rect(screen, (0,0,175), input_border)
+            pygame.draw.rect(screen, (255,255,255), input_inner)
+
+
+
+
+            screen.blit(ip_input.surface, (input_inner.x+15,input_inner.y+12))
+
+
+            port_input_border = pygame.Rect(join_button_inner.x+237, 520, 150, 70)
+            port_input_inner = pygame.Rect(join_button_inner.x+245, 530, 134, 50)
+
+            pygame.draw.rect(screen, (0,0,175), port_input_border)
+            pygame.draw.rect(screen, (255,255,255), port_input_inner)
+            screen.blit(port_input.surface, (port_input_inner.x+15,port_input_inner.y+12))
+
+            text_renderer_join_address = text_font2.render("IP ADDRESS:", False, (0,0,0))
+            screen.blit(text_renderer_join_address, (input_border.x+100, input_border.y-23))
+            text_renderer_join_port = text_font2.render("PORT:", False, (0,0,0))
+            screen.blit(text_renderer_join_port, (port_input_border.x+50, port_input_border.y-23))
+
+            text_renderer_connect = text_font3.render("CREATE", False, (0,0,0))
+            confirm_connection_button = pygame.Rect(port_input_border.x+200, port_input_border.y, 175, 70)
+            confirm_connection_button_inner = pygame.Rect(port_input_border.x+210, port_input_border.y+10, 155, 50)
+            pygame.draw.rect(screen, (0,0,0), confirm_connection_button)
+            pygame.draw.rect(screen, (255,255,255), confirm_connection_button_inner)
+            screen.blit(text_renderer_connect, (confirm_connection_button_inner.x+18, confirm_connection_button_inner.y+13))
 
 
 
@@ -427,26 +460,12 @@ while game:
                 game = False
                 pygame.quit()
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if host_button_border.collidepoint(event.pos):
-                    try:
-                        my_ip = "192.168.1.111"
-                        try:
-                            subprocess.run(["start", "powershell", "-Command", f"python server.py"], shell=True)
-                        except Exception as error:
-                            print(error)
-                        time.sleep(1)
-                        server_menu_messageA = f"Server Started at {my_ip}"
-                        server_menu_messageB = "Waiting for opponent..."
-                        try:
-                            connect_to_server(my_ip)
-                        except Exception as error:
-                            print(error)
-
-                    except Exception as error:
-                        server_message = f"{error}"
-                    show_server_message = True
                 if join_button_border.collidepoint(event.pos):
                     joining = True
+                    hosting = False
+                if host_button_border.collidepoint(event.pos):
+                    hosting = True
+                    joining = False
                 if input_border:
                     print("leleellee")
                     if input_border.collidepoint(event.pos):
@@ -473,6 +492,28 @@ while game:
                                 print("GOOD")
                             except:
                                 pass
+                if hosting:
+                    if confirm_connection_button:
+                        if confirm_connection_button.collidepoint(event.pos):
+                            try:
+                                # my_ip = "192.168.1.111"
+                                hosting_address = ip_input.value
+                                hosting_port = int(port_input.value)
+                                try:
+                                    subprocess.run(["start", "powershell", "-Command", f"python server.py"], shell=True)
+                                except Exception as error:
+                                    print(error)
+                                time.sleep(1)
+                                server_menu_messageA = f"Server Started at {hosting_address}"
+                                server_menu_messageB = "Waiting for opponent..."
+                                try:
+                                    connect_to_server(hosting_address, hosting_port)
+                                except Exception as error:
+                                    print(error)
+
+                            except Exception as error:
+                                server_message = f"{error}"
+                            show_server_message = True
             if ip_input_typing:
                 if event.type == pygame.KEYDOWN:
                     ip_input.update([event])
