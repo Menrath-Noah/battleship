@@ -17,25 +17,24 @@ coords_received = []
 
 host_attacks = []
 visitor_attacks = []
+host_hits = []
+visitor_hits = []
+
+play_again = []
 
 current_turn = ""
 
 select_ship_positions = True
 play_game = False
+check_win_condition = True
 
 
 # Create and bind the server socket
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-
-
-
 def loop_game():
-    global select_ship_positions
-    global current_turn
-    global play_game
-    global device_objects
+    global select_ship_positions, current_turn, play_game, device_objects, check_win_condition
     while True:
         if len(coords_received) == 2 and select_ship_positions:
             select_ship_positions = False
@@ -58,6 +57,27 @@ def loop_game():
             device_objects["HOST"].send("FUNC:begin_game+".encode("utf-8"))
             device_objects["VISITOR"].send(f"FUNC:begin_game+".encode("utf-8"))
             play_game = True
+        if check_win_condition:
+            # if len(visitor_ship_coords) == len(host_hits) and len(visitor_ship_coords) > 1:
+            if set(host_hits) == set(visitor_ship_coords) and host_hits:
+                print("HOST Wins!")
+                device_objects["HOST"].send("VAR:end_game:WIN+".encode("utf-8"))
+                device_objects["VISITOR"].send("VAR:end_game:LOSE+".encode("utf-8"))
+                check_win_condition = False
+            # if len(host_ship_coords) == len(visitor_hits) and len(host_ship_coords) > 1:
+            if set(visitor_hits) == set(host_ship_coords) and visitor_hits:
+                print("VISITOR Wins!")
+                device_objects["VISITOR"].send("VAR:end_game:WIN+".encode("utf-8"))
+                device_objects["HOST"].send("VAR:end_game:LOSE+".encode("utf-8"))
+                check_win_condition = False
+        if len(play_again) >= 2:
+            device_objects["HOST"].send("FUNC:restart_game+".encode("utf-8"))
+            device_objects["VISITOR"].send("FUNC:restart_game+".encode("utf-8"))
+            restart_game()
+        # print(f"V: {len(visitor_ship_coords)}")
+        # print(visitor_ship_coords)
+        # print(f"H: {len(host_hits)}")
+
 
 
 
@@ -73,12 +93,21 @@ def loop_client(device, address):
             print(new_data)
             if new_data.startswith("SHIP-COORDS:"):
                 if address[0] == HOST_IP:
-                    host_ship_coords = new_data.split("SHIP-COORDS:", 2)[1]
+                    # coords = new_data.split("SHIP-COORDS:", 2)[1]
+                    # for coord in coords:
+                    #     host_ship_coords.append(coord)
+                    coords = new_data[12:]
+                    host_ship_coords = eval(coords)
                     print(f"Host Ship Coords: {host_ship_coords}")
                     device.send(f"SERVER: Coordinates Received.+".encode("utf-8"))
                     coords_received.append(1)
                 elif address[0] == VISITOR_IP:
-                    visitor_ship_coords = new_data.split("SHIP-COORDS:", 2)[1]
+                    # coords = new_data.split("SHIP-COORDS:", 2)[1]
+                    coords = new_data[12:]
+                    # for coord in coords:
+                    #     visitor_ship_coords.append(coord)
+                    visitor_ship_coords = eval(coords)
+                    # visitor_ship_coords = new_data.split("SHIP-COORDS:", 2)[1]
                     print(f"Visitor Ship Coords: {visitor_ship_coords}")
                     device.send(f"SERVER: Coordinates Received.+".encode("utf-8"))
                     coords_received.append(1)
@@ -89,6 +118,9 @@ def loop_client(device, address):
                     host_attacks.append(new_data)
                     if new_data in visitor_ship_coords:
                         device.send(f"ATTACK:RECEIVED:HIT:{new_data}+".encode("utf-8"))
+                        host_hits.append(new_data)
+                        print(f"H: {set(host_hits)}")
+                        print(f"V: {set(visitor_ship_coords)}")
                     else:
                         device.send(f"ATTACK:RECEIVED:MISS:{new_data}+".encode("utf-8"))
                     other_player = ""
@@ -111,6 +143,7 @@ def loop_client(device, address):
                     visitor_attacks.append(new_data)
                     if new_data in host_ship_coords:
                         device.send(f"ATTACK:RECEIVED:HIT:{new_data}+".encode("utf-8"))
+                        visitor_hits.append(new_data)
                     else:
                         device.send(f"ATTACK:RECEIVED:MISS:{new_data}+".encode("utf-8"))
                     
@@ -123,12 +156,37 @@ def loop_client(device, address):
                         device_objects[other_player].send(f"ATTACK:OPPONENT:HIT:{new_data}+".encode("utf-8"))
                     else:
                         device_objects[other_player].send(f"ATTACK:OPPONENT:MISS:{new_data}+".encode("utf-8"))
-                    
                     current_turn = "HOST"
                     device.send(f"VAR:my_turn:False+".encode("utf-8"))
                     device_objects[other_player].send(f"VAR:my_turn:True+".encode("utf-8"))
+            if new_data.startswith("VAR:"):
+                if address[0] == HOST_IP:
+                    new_data = new_data.split("VAR:", 2)[1]
+                    if new_data == "play_again":
+                        if "HOST" not in play_again:
+                            play_again.append("HOST")
+                elif address[0] == VISITOR_IP:
+                    new_data = new_data.split("VAR:", 2)[1]
+                    if new_data == "play_again":
+                        if "VISITOR" not in play_again:
+                            play_again.append("VISITOR")
 
 
+def restart_game():
+    global host_ship_coords, visitor_ship_coords, coords_received, host_attacks, visitor_attacks, host_hits, visitor_hits, play_again, current_turn, select_ship_positions, play_game, check_win_condition
+    print("Game Restarted!")
+    host_ship_coords = []
+    visitor_ship_coords = []
+    coords_received = []
+    host_attacks = []
+    visitor_attacks = []
+    host_hits = []
+    visitor_hits = []
+    play_again = []
+    current_turn = ""
+    select_ship_positions = True
+    play_game = False
+    check_win_condition = True
 
 
 if __name__ == "__main__":

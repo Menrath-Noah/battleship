@@ -16,6 +16,8 @@ outerBackground = pygame.image.load("./img/outerBackgroundResized.png").convert_
 borderBarHorizontal = pygame.image.load("./img/borderBarTop.png").convert_alpha()
 borderBarVertical = pygame.image.load("./img/borderBarSide.png").convert_alpha()
 
+grid_background = pygame.image.load("./img/gridBackground.png").convert_alpha()
+
 coords_used = []
 
 # SERVER_IP = '192.168.1.111'
@@ -199,6 +201,7 @@ class FiveSquareBoat(Boat): # class for five square-long boat
 menu_font = pygame.font.SysFont("Roger Bold Serif", 48)
 text_font = pygame.font.SysFont("Roger Bold Serif", 28)
 server_message_font = pygame.font.SysFont("Times New Romand", 32)
+game_result_font = pygame.font.SysFont("Roger Bold Serif", 56)
 
 textBoardHome = {}
 textBoardAway = {}
@@ -224,10 +227,16 @@ create_game = True
 select_ship_positions = True
 play_game = False
 main_menu = True
+end_screen = False
+# end_screen = True
+# create_game = False
+# select_ship_positions = False
+# play_game = False
+# main_menu = False
+
 
 ships = []
-ships.append(TwoSquareBoat())
-ships.append(FiveSquareBoat())
+
 
 currently_selected = None
 canceled_action = False
@@ -239,26 +248,55 @@ show_server_message = False
 server_menu_messageA = ""
 server_menu_messageB = ""
 
+server_result_message = ""
+
 ip_input = pg_input.TextInputVisualizer()
 joining = False
 input_border = None
 ip_input_typing = False
 connecting_address = ""
 confirm_connection_button = None
+game_result = False
+play_again = False
+
+
 
 
 def begin_game():
     print("GAME BEGINNING!!!")
     global joining, input_border, ip_input_typing, show_server_message, server_menu_messageA, server_menu_messageB, play_game, main_menu, select_ship_positions
+    global end_screen, game_result, server_result_message, play_again, gridHome, gridAway, my_attacks, my_missed_attacks, my_hit_attacks, opponent_attacks, opponent_hit_attacks, opponent_missed_attacks
+    global textBoardHome, textBoardAway, create_game, confirm_connection_button, ships, coords_used
     joining = False
     input_border = None
     ip_input_typing = False
     show_server_message = False
     server_menu_messageA = ""
     server_menu_messageB = ""
+    server_result_message = ""
     play_game = False
     main_menu = False
     select_ship_positions = True
+    create_game = True
+    end_screen = False
+    game_result = False
+    play_again = False
+    gridHome = {}
+    gridAway = {}
+    my_attacks = []
+    my_missed_attacks = []
+    my_hit_attacks = []
+    opponent_attacks = []
+    opponent_missed_attacks = []
+    opponent_hit_attacks = []
+    textBoardHome = {}
+    textBoardAway = {}
+    confirm_connection_button = None
+    ships = []
+    coords_used = []
+    ships.append(TwoSquareBoat())
+    ships.append(FiveSquareBoat())
+
 
 game = True
 while game:
@@ -393,14 +431,17 @@ while game:
             pass
 
 
-
-
-
         pygame.display.flip()
         pygame.display.update()
 
-    elif not main_menu:
+    elif not main_menu and not end_screen:
         screen.blit(outerBackground, (0, 0))
+        # screen.blit(mainMenuBackground, (0, 0))
+
+        # if "A1" in gridHome:
+        #     screen.blit(grid_background, (gridHome["A1"].rect.x, gridHome["A1"].rect.y))
+        # if "A1" in gridAway:
+        #     screen.blit(grid_background, (gridAway["A1"].rect.x, gridAway["A1"].rect.y))
 
         screen.blit(borderBarHorizontal, (92, 92))
         screen.blit(borderBarHorizontal, (92, 459))
@@ -692,6 +733,15 @@ while game:
                             elif var_value == "False":
                                 my_turn = False
                                 print("F")
+                        if var == "end_game":
+                            if var_value == "WIN":
+                                server_result_message = "YOU WIN!!!"
+                                end_screen = True
+                                game_result = True
+                            elif var_value == "LOSE":
+                                server_result_message = "YOU LOSE!!!"
+                                end_screen = True
+                                game_result = False
                     if data.startswith("ATTACK:"):
                         print("EINS")
                         updated_data = data[7:]
@@ -736,6 +786,8 @@ while game:
                         if updated_data == "begin_game":
                             print("HEHE-2")
                             begin_game()
+                        if updated_data == "restart_game":
+                            begin_game()
                     else:
                         print(data)
             else:
@@ -764,6 +816,15 @@ while game:
                         elif var_value == "False":
                             my_turn = False
                             print("5")
+                    if var == "end_game":
+                        if var_value == "WIN":
+                            server_result_message = "YOU WIN!!!"
+                            end_screen = True
+                            game_result = True
+                        elif var_value == "LOSE":
+                            server_result_message = "YOU LOSE!!!"
+                            end_screen = True
+                            game_result = False
                 if new_data.startswith("ATTACK:"):
                     print("EINS-2")
                     new_data = new_data[7:]
@@ -812,6 +873,8 @@ while game:
                     if updated_data == "begin_game":
                         print("HEHE-B")
                         begin_game()
+                    if updated_data == "restart_game":
+                        begin_game()
                 else:
                     new_data = new_data.replace("+", "")
                     new_data.strip()
@@ -823,6 +886,87 @@ while game:
             text_rendererTurn = text_font.render("MY TURN", False, (0,0,0))
             screen.blit(text_rendererTurn, (480, 25))
 
+
+        pygame.display.flip()
+        pygame.display.update()
+
+    elif end_screen:
+        screen.blit(mainMenuBackground, (0, 0))
+
+
+        activity_border = pygame.Rect(275, 135, 600, 350)
+        activity_inner = pygame.Rect(295, 155, 560, 310)
+        if game_result:
+            pygame.draw.rect(screen, (0,200,0), activity_border)
+        else:
+            pygame.draw.rect(screen, (200,0,0), activity_border)
+        pygame.draw.rect(screen, (255,255,255), activity_inner)
+
+        server_result_message = "YOU WIN!!!"
+        text_renderer_game_result = game_result_font.render(server_result_message, False, (0,0,0))
+        screen.blit(text_renderer_game_result, (activity_inner.x+175, activity_inner.y+25))
+
+        play_again_button_border = pygame.Rect(activity_inner.x+185, activity_inner.y+85, 200, 45)
+        pygame.draw.rect(screen, (0,0,95), play_again_button_border)
+
+        main_menu_button_border = pygame.Rect(activity_inner.x+185, activity_inner.y+150, 200, 45)
+        pygame.draw.rect(screen, (0,0,95), main_menu_button_border)
+
+        text_renderer_play_again = menu_font.render("Rematch", False, (144,144,144))
+        screen.blit(text_renderer_play_again, (play_again_button_border.x+25, play_again_button_border.y+8))
+
+        text_renderer_main_menu = menu_font.render("Main Menu", False, (144,144,144))
+        screen.blit(text_renderer_main_menu, (main_menu_button_border.x+13, main_menu_button_border.y+8))
+
+
+
+        if play_again:
+            text_renderer_awaiting_rematch = server_message_font.render("Waiting for opponent to rematch...", False, (144,144,144))
+            screen.blit(text_renderer_awaiting_rematch, (main_menu_button_border.x-60, main_menu_button_border.y+80))
+
+
+
+        for event in pygame.event.get(): # handles most user input events
+            if event.type == pygame.QUIT:
+                game = False
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if play_again_button_border.collidepoint(event.pos):
+                    play_again = True
+                    client.send(f"VAR:play_again".encode("utf-8"))
+                if main_menu_button_border.collidepoint(event.pos):
+                    main_menu = True
+                    end_screen = False
+
+
+
+
+        try:
+            new_data = client.recv(2048)
+            new_data = new_data.decode()
+            new_data = new_data.strip()
+            if new_data.count("+") > 1:
+                new_data = new_data.split("+")
+                for data in new_data:
+                    if data.startswith("FUNC:"):
+                        updated_data = data[5:]
+                        updated_data = updated_data.replace("+", "")
+                        updated_data = updated_data.strip()
+                        if updated_data == "restart_game":
+                            begin_game()
+                    else:
+                        print(data)
+            else:
+                if new_data.startswith("FUNC:"):
+                    updated_data = new_data[5:]
+                    updated_data = updated_data.replace("+", "")
+                    updated_data = updated_data.strip()
+                    if updated_data == "restart_game":
+                        begin_game()
+                else:
+                    print(new_data)
+        except:
+            pass
 
         pygame.display.flip()
         pygame.display.update()
