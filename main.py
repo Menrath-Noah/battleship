@@ -30,6 +30,8 @@ client = None
 def connect_to_server(connecting_address, connecting_port=5155):
     global client
     print("CONN-1")
+    print(connecting_address)
+    print(connecting_port)
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print("CONN-2")
     try:
@@ -482,7 +484,8 @@ while game:
                         print("YEYEYE")
                         if confirm_connection_button.collidepoint(event.pos):
                             connecting_address = ip_input.value
-                            connecting_port = 5155
+                            connecting_port = port_input.value
+                            # connecting_port = 5155
                             if port_input.value:
                                 connecting_port = int(port_input.value)
                             print("YEYEYEYE2")
@@ -500,7 +503,7 @@ while game:
                                 hosting_address = ip_input.value
                                 hosting_port = int(port_input.value)
                                 try:
-                                    subprocess.run(["start", "powershell", "-Command", f"python server.py"], shell=True)
+                                    subprocess.run(["start", "powershell", "-Command", f"python server.py {hosting_address} {hosting_port}"], shell=True)
                                 except Exception as error:
                                     print(error)
                                 time.sleep(1)
