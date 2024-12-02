@@ -27,7 +27,7 @@ client = None
 
 
 
-def connect_to_server(connecting_address):
+def connect_to_server(connecting_address, connecting_port=5155):
     global client
     print("CONN-1")
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,7 +35,7 @@ def connect_to_server(connecting_address):
     try:
         print("CONN-3")
 
-        client.connect((connecting_address, PORT))
+        client.connect((connecting_address, connecting_port))
         print("CONN-4")
         client.setblocking(False)
         print("***WELCOME TO THE SERVER!!!***")
@@ -245,7 +245,9 @@ class ThreeSquareBoat(Boat): # class for five square-long boat
 menu_font = pygame.font.SysFont("Roger Bold Serif", 48)
 text_font = pygame.font.SysFont("Roger Bold Serif", 28)
 text_font2 = pygame.font.SysFont("Bondi", 28)
-server_message_font = pygame.font.SysFont("Times New Roman", 32)
+text_font3= pygame.font.SysFont("Bondi", 42)
+server_message_font = pygame.font.SysFont("Times New Romand", 32)
+server_message_font2 = pygame.font.SysFont("Arial", 22)
 game_result_font = pygame.font.SysFont("Roger Bold Serif", 56)
 
 textBoardHome = {}
@@ -296,9 +298,12 @@ server_menu_messageB = ""
 server_result_message = ""
 
 ip_input = pg_input.TextInputVisualizer()
+port_input = pg_input.TextInputVisualizer()
 joining = False
 input_border = None
+port_input_border = None
 ip_input_typing = False
+port_input_typing = False
 connecting_address = ""
 confirm_connection_button = None
 game_result = False
@@ -382,17 +387,37 @@ while game:
             screen.blit(text_renderer_server_messageA, (host_button_inner.x+260,host_button_inner.y+5))
             screen.blit(text_renderer_server_messageB, (host_button_inner.x+260,host_button_inner.y+25))
         if joining:
-            input_border = pygame.Rect(join_button_inner.x+237, 345, 386, 70)
-            input_inner = pygame.Rect(join_button_inner.x+245, 355, 370, 50)
-            confirm_connection_button = pygame.Rect(join_button_inner.x+390, 425, 75, 50)
+            input_border = pygame.Rect(join_button_inner.x+237, 390, 386, 70)
+            input_inner = pygame.Rect(join_button_inner.x+245, 400, 370, 50)
+
 
             pygame.draw.rect(screen, (0,175,0), input_border)
             pygame.draw.rect(screen, (255,255,255), input_inner)
-            pygame.draw.rect(screen, (255,0,0), confirm_connection_button)
 
 
 
-            screen.blit(ip_input.surface, (join_button_inner.x+265,join_button_inner.y+10))
+
+            screen.blit(ip_input.surface, (input_inner.x+15,input_inner.y+12))
+
+
+            port_input_border = pygame.Rect(join_button_inner.x+237, 520, 150, 70)
+            port_input_inner = pygame.Rect(join_button_inner.x+245, 530, 134, 50)
+
+            pygame.draw.rect(screen, (0,175,0), port_input_border)
+            pygame.draw.rect(screen, (255,255,255), port_input_inner)
+            screen.blit(port_input.surface, (port_input_inner.x+15,port_input_inner.y+12))
+
+            text_renderer_join_address = text_font2.render("IP ADDRESS:", False, (0,0,0))
+            screen.blit(text_renderer_join_address, (input_border.x+100, input_border.y-23))
+            text_renderer_join_port = text_font2.render("PORT:", False, (0,0,0))
+            screen.blit(text_renderer_join_port, (port_input_border.x+50, port_input_border.y-23))
+
+            text_renderer_connect = text_font3.render("CONNECT", False, (0,0,0))
+            confirm_connection_button = pygame.Rect(port_input_border.x+200, port_input_border.y, 175, 70)
+            confirm_connection_button_inner = pygame.Rect(port_input_border.x+210, port_input_border.y+10, 155, 50)
+            pygame.draw.rect(screen, (0,0,0), confirm_connection_button)
+            pygame.draw.rect(screen, (255,255,255), confirm_connection_button_inner)
+            screen.blit(text_renderer_connect, (confirm_connection_button_inner.x+9, confirm_connection_button_inner.y+13))
 
 
 
@@ -428,20 +453,32 @@ while game:
                         ip_input_typing = True
                     else:
                         ip_input_typing = False
+                if port_input_border:
+                    if port_input_border.collidepoint(event.pos):
+                        port_input_typing = True
+                    else:
+                        port_input_typing = False
                 if joining:
                     if confirm_connection_button:
                         print("YEYEYE")
                         if confirm_connection_button.collidepoint(event.pos):
                             connecting_address = ip_input.value
+                            connecting_port = 5155
+                            if port_input.value:
+                                connecting_port = int(port_input.value)
                             print("YEYEYEYE2")
+                            print(connecting_port)
                             try:
-                                connect_to_server(connecting_address)
+                                connect_to_server(connecting_address, connecting_port)
                                 print("GOOD")
                             except:
                                 pass
             if ip_input_typing:
                 if event.type == pygame.KEYDOWN:
                     ip_input.update([event])
+            if port_input_typing:
+                if event.type == pygame.KEYDOWN:
+                    port_input.update([event])
 
         try:
             new_data = client.recv(2048)
