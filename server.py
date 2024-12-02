@@ -195,7 +195,7 @@ if __name__ == "__main__":
     HOST_IP = sys.argv[1]
     PORT = int(sys.argv[2])
     # server.bind((HOST_IP, PORT))
-    server.bind(("0.0.0.0", 5155))
+    server.bind((HOST_IP, PORT))
     server.listen(2)
     print(f"***SERVER LAUNCHED ON PORT {PORT}***")
     control_game = threading.Thread(target=loop_game)
