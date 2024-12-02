@@ -74,7 +74,7 @@ class GridButtonAway: # individual grid squares for Attacking
     def clicked(self):
         global selected_target
         print(f"I HAVE BEEN CLICKED AT: {self.coord}")
-        if my_turn:
+        if my_turn and self.coord not in my_attacks:
             selected_target = self.coord
             print(selected_target)
 
@@ -161,46 +161,91 @@ class Boat:
 
 
 class TwoSquareBoat(Boat): # class for two square-long boat
-    def __init__(self, x=350, y=500):
+    def __init__(self, x=395, y=485):
         super().__init__(x, y)
         self.x_pos = x
         self.y_pos = y
-        self.img = pygame.image.load("./img/2SquareBoat.png").convert_alpha()
+        self.img = pygame.image.load("./img/ship2.png").convert_alpha()
         self.rect = self.img.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.default_x = 350
-        self.default_y = 500
-        self.last_x = 350
-        self.last_y = 500
+        self.default_x = 395
+        self.default_y = 485
+        self.last_x = 395
+        self.last_y = 485
         self.blocks = 2
 
 
-
-
-
-
 class FiveSquareBoat(Boat): # class for five square-long boat
-    def __init__(self, x=100, y=500):
+    def __init__(self, x=65, y=485):
         super().__init__(x, y)
         self.x_pos = x
         self.y_pos = y
-        self.img = pygame.image.load("./img/5SquareBoat.png").convert_alpha()
+        self.img = pygame.image.load("./img/ship5Fixed2.png").convert_alpha()
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.default_x = 65
+        self.default_y = 485
+        self.last_x = 65
+        self.last_y = 485
+        self.blocks = 5
+
+
+class FourSquareBoat(Boat): # class for five square-long boat
+    def __init__(self, x=300, y=535):
+        super().__init__(x, y)
+        self.x_pos = x
+        self.y_pos = y
+        self.img = pygame.image.load("./img/4ship.png").convert_alpha()
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.default_x = 300
+        self.default_y = 535
+        self.last_x = 300
+        self.last_y = 535
+        self.blocks = 4
+
+
+class FourSquareSecondBoat(Boat): # class for five square-long boat
+    def __init__(self, x=100, y=535):
+        super().__init__(x, y)
+        self.x_pos = x
+        self.y_pos = y
+        self.img = pygame.image.load("./img/4shipSecond.png").convert_alpha()
         self.rect = self.img.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.default_x = 100
-        self.default_y = 500
+        self.default_y = 535
         self.last_x = 100
-        self.last_y = 500
-        self.blocks = 5
+        self.last_y = 535
+        self.blocks = 4
+
+
+class ThreeSquareBoat(Boat): # class for five square-long boat
+    def __init__(self, x=265, y=485):
+        super().__init__(x, y)
+        self.x_pos = x
+        self.y_pos = y
+        self.img = pygame.image.load("./img/3ship.png").convert_alpha()
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.default_x = 265
+        self.default_y = 485
+        self.last_x = 265
+        self.last_y = 485
+        self.blocks = 3
 
 
 
 
 menu_font = pygame.font.SysFont("Roger Bold Serif", 48)
 text_font = pygame.font.SysFont("Roger Bold Serif", 28)
-server_message_font = pygame.font.SysFont("Times New Romand", 32)
+text_font2 = pygame.font.SysFont("Bondi", 28)
+server_message_font = pygame.font.SysFont("Times New Roman", 32)
 game_result_font = pygame.font.SysFont("Roger Bold Serif", 56)
 
 textBoardHome = {}
@@ -296,7 +341,9 @@ def begin_game():
     coords_used = []
     ships.append(TwoSquareBoat())
     ships.append(FiveSquareBoat())
-
+    ships.append(FourSquareBoat())
+    ships.append(FourSquareSecondBoat())
+    ships.append(ThreeSquareBoat())
 
 game = True
 while game:
@@ -365,7 +412,11 @@ while game:
                         time.sleep(1)
                         server_menu_messageA = f"Server Started at {my_ip}"
                         server_menu_messageB = "Waiting for opponent..."
-                        connect_to_server(my_ip)
+                        try:
+                            connect_to_server(my_ip)
+                        except Exception as error:
+                            print(error)
+
                     except Exception as error:
                         server_message = f"{error}"
                     show_server_message = True
@@ -453,6 +504,10 @@ while game:
         screen.blit(borderBarVertical, (567, 92))
         screen.blit(borderBarVertical, (934, 92))
 
+        if select_ship_positions:
+            shipyard_background = pygame.Rect(50, 475, 435, 170)
+            pygame.draw.rect(screen, (144, 173, 200), shipyard_background)
+
 
 
         if create_game: # creates the game board
@@ -536,12 +591,24 @@ while game:
 
 
         if select_ship_positions:
-            confirm_button = pygame.Rect(225, 600, 100, 35)
-            pygame.draw.rect(screen, (45, 25, 92), confirm_button)
+            confirm_button = pygame.Rect(220, 585, 125, 45)
+            confirm_button_border = pygame.Rect(confirm_button.x-5, confirm_button.y-5, 135, 55)
+            pygame.draw.rect(screen, (255,255,255), confirm_button_border)
+            pygame.draw.rect(screen, (144,238,144), confirm_button)
+            text_renderer_confirm_button = text_font2.render("Confirm", False, (0,0,0))
+            screen.blit(text_renderer_confirm_button, (confirm_button.x+23, confirm_button.y+11))
+
+
+
         if play_game:
-            attack_button = pygame.Rect(800, 600, 100, 35)
+            attack_button = pygame.Rect(720, 500, 100, 35)
+            attack_button_border = pygame.Rect(attack_button.x-5, attack_button.y-5, 110, 45)
+            text_renderer_attack_button = text_font2.render("Attack", False, (0,0,0))
             if my_turn:
+                pygame.draw.rect(screen, (0,0,0), attack_button_border)
                 pygame.draw.rect(screen, (255,0,0), attack_button)
+                screen.blit(text_renderer_attack_button, (attack_button.x+21, attack_button.y+9))
+
             else:
                 pygame.draw.rect(screen, (128,128,128), attack_button)
 
@@ -564,17 +631,20 @@ while game:
                     if button.rect.collidepoint(event.pos):
                         button.clicked()
                 for key, button in gridAway.items(): # handles attacking a point
-                    if button.rect.collidepoint(event.pos):
+                    extended_square = pygame.Rect(button.rect.x, button.rect.y, button.rect.width + 1, button.rect.height + 1)
+                    if extended_square.collidepoint(event.pos):
                         button.clicked()
-                        print(attack_button)
-                        print(my_turn)
-                        if attack_button:
-                            print(event.pos)
-                            if attack_button.collidepoint(event.pos) and my_turn:
-                                print(selected_target)
-                                print("INNNN")
-                                client.send(f"POSITION:{selected_target}".encode("utf-8"))
-                                selected_target = ""
+                        print("HEHEHE")
+                        # print(attack_button)
+                        # print(my_turn)
+                        # if attack_button:
+                        #     print(event.pos)
+                        #     if attack_button.collidepoint(event.pos) and my_turn:
+                        #         if (selected_target not in my_attacks) and selected_target:
+                        #             print(selected_target)
+                        #             print("INNNN")
+                        #             client.send(f"POSITION:{selected_target}".encode("utf-8"))
+                        #             selected_target = ""
                         # if key in coords_used:
                         #     my_hit_attacks.append(key)
                         # else:
@@ -587,13 +657,19 @@ while game:
                 canceled_action = False
                 if confirm_button:
                     if confirm_button.collidepoint(event.pos):
-                        client.send(f"SHIP-COORDS:{coords_used}".encode("utf-8"))
-                        print("Ship Coords Locked-In!")
-                        currently_selected = None
-                        confirm_button = None
-                        select_ship_positions = False
+                        if len(ships) > 0:
+                            not_ready = False
+                            for boat in ships:
+                                if boat.rect.x == boat.default_x and boat.rect.y == boat.default_y:
+                                    not_ready = True
+                            if not not_ready:
+                                client.send(f"SHIP-COORDS:{coords_used}".encode("utf-8"))
+                                print("Ship Coords Locked-In!")
+                                currently_selected = None
+                                confirm_button = None
+                                select_ship_positions = False
                 if attack_button:
-                    if attack_button.collidepoint(event.pos) and my_turn:
+                    if attack_button.collidepoint(event.pos) and my_turn and selected_target:
                         print("LEELELELELE")
                         client.send(f"POSITION:{selected_target}".encode("utf-8"))
                         selected_target = ""
@@ -622,7 +698,8 @@ while game:
             mouse_pos = pygame.mouse.get_pos()
             hovering_grid = False
             for square in gridHome.values():
-                if square.rect.collidepoint(mouse_pos): # ship snaps to hovered over square
+                extended_square = pygame.Rect(square.rect.x, square.rect.y, square.rect.width + 1, square.rect.height + 1)
+                if extended_square.collidepoint(mouse_pos): # ship snaps to hovered over square
                     hovering_grid = True
                     # print("GRID")
                     currently_selected.rect.x = square.rect.x
@@ -700,6 +777,10 @@ while game:
             drawBoardText(key, text)
 
 
+        if selected_target:
+            pygame.draw.rect(screen, (255,255,255), (gridAway[selected_target].rect.x, gridAway[selected_target].rect.y, 35, 35), 4)
+
+
         try:
             new_data = client.recv(2048)
             new_data = new_data.decode()
@@ -754,9 +835,9 @@ while game:
                             var_change = updated_data.split(":")
                             var = var_change[0]
                             var_value = var_change[1]
-                            my_attacks.append(var_value)
                             var_value = var_value.replace("+", "")
                             var_value.strip()
+                            my_attacks.append(var_value)
                             if var == "HIT":
                                 print("DREI")
                                 my_hit_attacks.append(var_value)
@@ -882,9 +963,13 @@ while game:
         except:
             pass
 
-        if my_turn:
+        if play_game:
             text_rendererTurn = text_font.render("MY TURN", False, (0,0,0))
             screen.blit(text_rendererTurn, (480, 25))
+            if not my_turn:
+                pygame.draw.line(screen, (255,255,255), (465,32), (580,32), 2)
+
+
 
 
         pygame.display.flip()
@@ -902,7 +987,6 @@ while game:
             pygame.draw.rect(screen, (200,0,0), activity_border)
         pygame.draw.rect(screen, (255,255,255), activity_inner)
 
-        server_result_message = "YOU WIN!!!"
         text_renderer_game_result = game_result_font.render(server_result_message, False, (0,0,0))
         screen.blit(text_renderer_game_result, (activity_inner.x+175, activity_inner.y+25))
 
