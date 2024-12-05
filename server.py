@@ -2,9 +2,8 @@ import socket
 import sys
 import threading
 
-# HOST_IP = '192.168.1.111'
 HOST_IP = None
-PORT = 5155
+PORT = 5555
 
 VISITOR_IP = None
 
@@ -29,8 +28,6 @@ select_ship_positions = True
 play_game = False
 check_win_condition = True
 
-
-# Create and bind the server socket
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
@@ -59,7 +56,6 @@ def loop_game():
             device_objects["VISITOR"].send(f"FUNC:begin_game+".encode("utf-8"))
             play_game = True
         if check_win_condition:
-            # if len(visitor_ship_coords) == len(host_hits) and len(visitor_ship_coords) > 1:
             if set(host_hits) == set(visitor_ship_coords) and host_hits:
                 print("HOST Wins!")
                 device_objects["HOST"].send("VAR:end_game:WIN+".encode("utf-8"))
@@ -75,11 +71,6 @@ def loop_game():
             device_objects["HOST"].send("FUNC:restart_game+".encode("utf-8"))
             device_objects["VISITOR"].send("FUNC:restart_game+".encode("utf-8"))
             restart_game()
-        # print(f"V: {len(visitor_ship_coords)}")
-        # print(visitor_ship_coords)
-        # print(f"H: {len(host_hits)}")
-
-
 
 
 def loop_client(device, address):
@@ -89,26 +80,17 @@ def loop_client(device, address):
         new_data = device.recv(2048)
         new_data = new_data.decode()
         if len(new_data) > 0:
-            # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            # client.bind((address[0], address[1]))
             print(new_data)
             if new_data.startswith("SHIP-COORDS:"):
                 if address[0] == HOST_IP:
-                    # coords = new_data.split("SHIP-COORDS:", 2)[1]
-                    # for coord in coords:
-                    #     host_ship_coords.append(coord)
                     coords = new_data[12:]
                     host_ship_coords = eval(coords)
                     print(f"Host Ship Coords: {host_ship_coords}")
                     device.send(f"SERVER: Coordinates Received.+".encode("utf-8"))
                     coords_received.append(1)
                 elif address[0] == VISITOR_IP:
-                    # coords = new_data.split("SHIP-COORDS:", 2)[1]
                     coords = new_data[12:]
-                    # for coord in coords:
-                    #     visitor_ship_coords.append(coord)
                     visitor_ship_coords = eval(coords)
-                    # visitor_ship_coords = new_data.split("SHIP-COORDS:", 2)[1]
                     print(f"Visitor Ship Coords: {visitor_ship_coords}")
                     device.send(f"SERVER: Coordinates Received.+".encode("utf-8"))
                     coords_received.append(1)
@@ -120,8 +102,6 @@ def loop_client(device, address):
                     if new_data in visitor_ship_coords:
                         device.send(f"ATTACK:RECEIVED:HIT:{new_data}+".encode("utf-8"))
                         host_hits.append(new_data)
-                        print(f"H: {set(host_hits)}")
-                        print(f"V: {set(visitor_ship_coords)}")
                     else:
                         device.send(f"ATTACK:RECEIVED:MISS:{new_data}+".encode("utf-8"))
                     other_player = ""
@@ -191,10 +171,8 @@ def restart_game():
 
 
 if __name__ == "__main__":
-    # HOST_IP = "192.168.1.111"
     HOST_IP = sys.argv[1]
     PORT = int(sys.argv[2])
-    # server.bind((HOST_IP, PORT))
     server.bind((HOST_IP, PORT))
     server.listen(2)
     print(f"***SERVER LAUNCHED ON PORT {PORT}***")
@@ -209,7 +187,6 @@ if __name__ == "__main__":
                 device_objects["HOST"] = connection_obj
             else:
                 device_objects["VISITOR"] = connection_obj
-            # device_objects.append(connection_obj)
             if address[0] != HOST_IP:
                 VISITOR_IP = address[0]
         print(devices)

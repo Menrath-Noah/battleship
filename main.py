@@ -29,23 +29,14 @@ client = None
 
 def connect_to_server(connecting_address, connecting_port=5155):
     global client
-    print("CONN-1")
-    print(connecting_address)
-    print(connecting_port)
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("CONN-2")
     try:
-        print("CONN-3")
-
         client.connect((connecting_address, connecting_port))
-        print("CONN-4")
         client.setblocking(False)
         print("***WELCOME TO THE SERVER!!!***")
     except Exception as error:
         print("***CANNOT CONNECT***", error)
         sys.exit()
-
-
 
 
 class GridButtonHome: # individual grid squares for Placing Boats
@@ -118,7 +109,6 @@ class Boat:
                     selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
                     first_square_num += 1
                     current_square_count += 1
-                print(selected_squares)
                 if len(selected_squares) == self.blocks and first_square_num <= 11:
                     for square in selected_squares:
                         if square in coords_used:
@@ -140,7 +130,6 @@ class Boat:
                     selected_squares.append(f"{chr(first_square_letter)}{first_square_num}")
                     first_square_letter += 1
                     current_square_count += 1
-                print(selected_squares)
                 if len(selected_squares) == self.blocks and first_square_letter <= 75:
                     for square in selected_squares:
                         if square in coords_used:
@@ -194,7 +183,7 @@ class FiveSquareBoat(Boat): # class for five square-long boat
         self.blocks = 5
 
 
-class FourSquareBoat(Boat): # class for five square-long boat
+class FourSquareBoat(Boat): # class for four square-long boat
     def __init__(self, x=300, y=535):
         super().__init__(x, y)
         self.x_pos = x
@@ -210,7 +199,7 @@ class FourSquareBoat(Boat): # class for five square-long boat
         self.blocks = 4
 
 
-class FourSquareSecondBoat(Boat): # class for five square-long boat
+class FourSquareSecondBoat(Boat): # class for second four square-long boat
     def __init__(self, x=100, y=535):
         super().__init__(x, y)
         self.x_pos = x
@@ -226,7 +215,7 @@ class FourSquareSecondBoat(Boat): # class for five square-long boat
         self.blocks = 4
 
 
-class ThreeSquareBoat(Boat): # class for five square-long boat
+class ThreeSquareBoat(Boat): # class for three square-long boat
     def __init__(self, x=265, y=485):
         super().__init__(x, y)
         self.x_pos = x
@@ -277,11 +266,6 @@ select_ship_positions = True
 play_game = False
 main_menu = True
 end_screen = False
-# end_screen = True
-# create_game = False
-# select_ship_positions = False
-# play_game = False
-# main_menu = False
 
 
 ships = []
@@ -469,7 +453,6 @@ while game:
                     hosting = True
                     joining = False
                 if input_border:
-                    print("leleellee")
                     if input_border.collidepoint(event.pos):
                         ip_input_typing = True
                     else:
@@ -481,18 +464,14 @@ while game:
                         port_input_typing = False
                 if joining:
                     if confirm_connection_button:
-                        print("YEYEYE")
                         if confirm_connection_button.collidepoint(event.pos):
                             connecting_address = ip_input.value
                             connecting_port = port_input.value
                             # connecting_port = 5155
                             if port_input.value:
                                 connecting_port = int(port_input.value)
-                            print("YEYEYEYE2")
-                            print(connecting_port)
                             try:
                                 connect_to_server(connecting_address, connecting_port)
-                                print("GOOD")
                             except:
                                 pass
                 if hosting:
@@ -528,19 +507,14 @@ while game:
             new_data = client.recv(2048)
             new_data = new_data.decode()
             new_data = new_data.strip()
-            print("----")
-            print(new_data)
-            print("----")
             if new_data.count("+") > 1:
                 new_data = new_data.split("+")
                 for data in new_data:
                     if data.startswith("FUNC:"):
-                        print("HEHE-1")
                         updated_data = data[5:]
                         updated_data = updated_data.replace("+", "")
                         updated_data = updated_data.strip()
                         if updated_data == "begin_game":
-                            print("HEHE-2")
                             begin_game()
                     else:
                         data = data.replace("+", "")
@@ -548,12 +522,10 @@ while game:
                         print(data)
             else:
                 if new_data.startswith("FUNC:"):
-                    print("HEHE-A")
                     updated_data = new_data[5:]
                     updated_data = updated_data.replace("+", "")
                     updated_data = updated_data.strip()
                     if updated_data == "begin_game":
-                        print("HEHE-B")
                         begin_game()
                 else:
                     new_data = new_data.replace("+", "")
@@ -568,12 +540,6 @@ while game:
 
     elif not main_menu and not end_screen:
         screen.blit(outerBackground, (0, 0))
-        # screen.blit(mainMenuBackground, (0, 0))
-
-        # if "A1" in gridHome:
-        #     screen.blit(grid_background, (gridHome["A1"].rect.x, gridHome["A1"].rect.y))
-        # if "A1" in gridAway:
-        #     screen.blit(grid_background, (gridAway["A1"].rect.x, gridAway["A1"].rect.y))
 
         screen.blit(borderBarHorizontal, (92, 92))
         screen.blit(borderBarHorizontal, (92, 459))
@@ -715,21 +681,6 @@ while game:
                     extended_square = pygame.Rect(button.rect.x, button.rect.y, button.rect.width + 1, button.rect.height + 1)
                     if extended_square.collidepoint(event.pos):
                         button.clicked()
-                        print("HEHEHE")
-                        # print(attack_button)
-                        # print(my_turn)
-                        # if attack_button:
-                        #     print(event.pos)
-                        #     if attack_button.collidepoint(event.pos) and my_turn:
-                        #         if (selected_target not in my_attacks) and selected_target:
-                        #             print(selected_target)
-                        #             print("INNNN")
-                        #             client.send(f"POSITION:{selected_target}".encode("utf-8"))
-                        #             selected_target = ""
-                        # if key in coords_used:
-                        #     my_hit_attacks.append(key)
-                        # else:
-                        #     my_missed_attacks.append(key)
                 if not canceled_action and not currently_selected: # handles selecting a ship to move/place
                     for ship in ships:
                         if ship.rect.collidepoint(event.pos) and select_ship_positions:
@@ -751,7 +702,6 @@ while game:
                                 select_ship_positions = False
                 if attack_button:
                     if attack_button.collidepoint(event.pos) and my_turn and selected_target:
-                        print("LEELELELELE")
                         client.send(f"POSITION:{selected_target}".encode("utf-8"))
                         selected_target = ""
 
@@ -782,15 +732,12 @@ while game:
                 extended_square = pygame.Rect(square.rect.x, square.rect.y, square.rect.width + 1, square.rect.height + 1)
                 if extended_square.collidepoint(mouse_pos): # ship snaps to hovered over square
                     hovering_grid = True
-                    # print("GRID")
                     currently_selected.rect.x = square.rect.x
                     currently_selected.rect.y = square.rect.y
-                    #currently_selected.calc_grid_squares()
                     break
             if not hovering_grid: # if ship is not over a grid square, follow the mouse
                 currently_selected.rect.x = mouse_pos[0]
                 currently_selected.rect.y = mouse_pos[1]
-                # print("NO GRID")
 
 
         for button in my_missed_attacks:
@@ -866,14 +813,10 @@ while game:
             new_data = client.recv(2048)
             new_data = new_data.decode()
             new_data = new_data.strip()
-            print("----")
-            print(new_data)
-            print("----")
             if new_data.count("+") > 1:
                 new_data = new_data.split("+")
                 for data in new_data:
                     if data.startswith("VAR:"):
-                        print("A")
                         updated_data = data[4:]
                         var_change = updated_data.split(":")
                         var = var_change[0]
@@ -881,20 +824,15 @@ while game:
                         var_value = var_value.replace("+", "")
                         var_value.strip()
                         if var == "play_game":
-                            print("B")
                             if var_value == "True":
                                 play_game = True
-                                print("C")
                             elif var_value == "False":
                                 play_game = False
                         if var == "my_turn":
-                            print("D")
                             if var_value == "True":
-                                print("E")
                                 my_turn = True
                             elif var_value == "False":
                                 my_turn = False
-                                print("F")
                         if var == "end_game":
                             if var_value == "WIN":
                                 server_result_message = "YOU WIN!!!"
@@ -905,13 +843,11 @@ while game:
                                 end_screen = True
                                 game_result = False
                     if data.startswith("ATTACK:"):
-                        print("EINS")
                         updated_data = data[7:]
                         var_change = updated_data.split(":")
                         var = var_change[0]
                         var_value = var_change[1]
                         if var == "RECEIVED":
-                            print("ZWEI")
                             updated_data = updated_data[9:]
                             var_change = updated_data.split(":")
                             var = var_change[0]
@@ -920,13 +856,10 @@ while game:
                             var_value.strip()
                             my_attacks.append(var_value)
                             if var == "HIT":
-                                print("DREI")
                                 my_hit_attacks.append(var_value)
                             elif var == "MISS":
-                                print("VIER")
                                 my_missed_attacks.append(var_value)
                         elif var == "OPPONENT":
-                            print("FUNF")
                             updated_data = updated_data[9:]
                             var_change = updated_data.split(":")
                             var = var_change[0]
@@ -935,18 +868,14 @@ while game:
                             var_value.strip()
                             opponent_attacks.append(var_value)
                             if var == "HIT":
-                                print("SECHS")
                                 opponent_hit_attacks.append(var_value)
                             elif var == "MISS":
-                                print("SIEBEN")
                                 opponent_missed_attacks.append(var_value)
                     if data.startswith("FUNC:"):
-                        print("HEHE-1")
                         updated_data = data[5:]
                         updated_data = updated_data.replace("+", "")
                         updated_data = updated_data.strip()
                         if updated_data == "begin_game":
-                            print("HEHE-2")
                             begin_game()
                         if updated_data == "restart_game":
                             begin_game()
@@ -954,7 +883,6 @@ while game:
                         print(data)
             else:
                 if new_data.startswith("VAR:"):
-                    print("0")
                     new_data = new_data[4:]
                     var_change = new_data.split(":")
                     var = var_change[0]
@@ -962,22 +890,15 @@ while game:
                     var_value = var_value.replace("+", "")
                     var_value.strip()
                     if var == "play_game":
-                        print("1")
                         if var_value == "True":
                             play_game = True
-                            print("2")
                         elif var_value == "False":
                             play_game = False
                     if var == "my_turn":
-                        print("3")
-                        print(var)
-                        print(var_value)
                         if var_value == "True":
-                            print("4")
                             my_turn = True
                         elif var_value == "False":
                             my_turn = False
-                            print("5")
                     if var == "end_game":
                         if var_value == "WIN":
                             server_result_message = "YOU WIN!!!"
@@ -988,15 +909,11 @@ while game:
                             end_screen = True
                             game_result = False
                 if new_data.startswith("ATTACK:"):
-                    print("EINS-2")
                     new_data = new_data[7:]
                     var_change = new_data.split(":")
                     var = var_change[0]
                     var_value = var_change[1]
-                    print(var)
-                    print(var_value)
                     if var == "RECEIVED":
-                        print("ZWEI-2")
                         new_data = new_data[9:]
                         var_change = new_data.split(":")
                         var = var_change[0]
@@ -1004,16 +921,11 @@ while game:
                         var_value = var_value.replace("+", "")
                         var_value.strip()
                         my_attacks.append(var_value)
-                        print(var)
-                        print(var_value)
                         if var == "HIT":
-                            print("DREI-2")
                             my_hit_attacks.append(var_value)
                         elif var == "MISS":
-                            print("VIER-2")
                             my_missed_attacks.append(var_value)
                     elif var == "OPPONENT":
-                        print("FUNF-2")
                         new_data = new_data[9:]
                         var_change = new_data.split(":")
                         var = var_change[0]
@@ -1022,18 +934,14 @@ while game:
                         var_value.strip()
                         opponent_attacks.append(var_value)
                         if var == "HIT":
-                            print("SECHS-2")
                             opponent_hit_attacks.append(var_value)
                         elif var == "MISS":
-                            print("SIEBEN-2")
                             opponent_missed_attacks.append(var_value)
                 if new_data.startswith("FUNC:"):
-                    print("HEHE-A")
                     updated_data = new_data[5:]
                     updated_data = updated_data.replace("+", "")
                     updated_data = updated_data.strip()
                     if updated_data == "begin_game":
-                        print("HEHE-B")
                         begin_game()
                     if updated_data == "restart_game":
                         begin_game()
